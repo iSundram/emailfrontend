@@ -1,813 +1,522 @@
-1 — High-level Principles
+# WhyMail Frontend Specification
 
-1. User-first performance: inbox loads <1s on typical broadband; UI interactions feel instantaneous.
+> Modern email client frontend for the WhyMail backend platform
+> Built with React 18+ | TypeScript | Vite | Tailwind CSS
+
+---
+
+## 1 - High-level Principles
+
+1. **User-first performance**: inbox loads <1s on typical broadband; UI interactions feel instantaneous; code-splitting and lazy loading for optimal bundle size.
+
+2. **Privacy & control**: minimum server-side retention; local-first caching with IndexedDB; end-to-end encryption support (PGP/GPG) for power users.
+
+3. **Predictable UX**: keyboard-centric with clear visual affordances; familiar three-pane layout while allowing custom layouts; command palette for quick navigation.
+
+4. **Extensibility & interoperability**: plugin architecture, REST API integration, WebSocket for real-time updates, browser extensions.
+
+5. **Accessibility & inclusivity**: full keyboard navigation, screen-reader support, WCAG 2.1 AA compliance, ARIA attributes, skip links.
+
+6. **Security-first**: phishing protections, session/device management, strict CSP, XSS prevention, secure-by-default settings.
+
+7. **No dark patterns**: transparent feature gating, clear opt-ins for telemetry, no behavioral ads.
+
+---
+
+## Technology Stack
+
+- **Framework**: React 18+ with TypeScript
+- **Build Tool**: Vite 5+
+- **Styling**: Tailwind CSS with custom theme
+- **State Management**: React Query for server state, Zustand for client state
+- **Virtualization**: react-window for efficient list rendering
+- **Offline**: Service Worker + IndexedDB for caching
+- **WebSocket**: Real-time updates from backend
+- **Icons**: Lucide React (no emojis)
+
+---
+
+## Color Theme
+
+| Usage          | Hex Code  | Description       |
+|----------------|-----------|-------------------|
+| Background     | #E7F0FA   | Light blue-gray   |
+| Secondary      | #7BA4D0   | Soft blue         |
+| Primary        | #2E5E99   | Deep blue         |
+| Dark/Accent    | #0D2440   | Navy blue         |
+
+---
+
+## Backend Integration
+
+The frontend connects to the WhyMail Go backend which provides:
+
+### REST API Endpoints (port 8080)
+- **Authentication**: JWT-based sessions
+- **Domains**: CRUD operations for email domains
+- **Users**: User management with roles
+- **Mailboxes**: List, read, manage mailboxes
+- **Messages**: CRUD, search, filters, labels
+- **Drafts**: Create, update, send drafts
+- **Attachments**: Upload, download, delete
+- **Rules**: Email filtering rules
+- **Notifications**: In-app notifications
+- **Search**: Full-text search with filters
+- **Settings**: User and system configuration
+
+### WebSocket Events (port 8080/ws)
+- `new_message` - New email received
+- `message_updated` - Message flags changed
+- `notification` - New notification
+- `folder_count` - Folder count updated
+
+### Email Protocols
+- SMTP: Ports 25, 587, 465 (handled by backend)
+- IMAP: Ports 143, 993 (handled by backend)
 
 
-2. Privacy & control: minimum server-side retention; allow users to choose local-first caching; end-to-end encryption support for power users.
-
-
-3. Predictable UX: keyboard-centric with clear visual affordances; familiar three-pane layout while allowing custom layouts.
-
-
-4. Extensibility & interoperability: open plugin architecture, public API, webhooks, browser extensions.
-
-
-5. Accessibility & inclusivity: full keyboard navigation, screen-reader support, WCAG 2.1 AA compliance.
-
-
-6. Security-first: phishing protections, session/device management, strict CSP and secure-by-default settings.
-
-
-7. No dark patterns: transparent feature gating, clear opt-ins for telemetry or extra services.
 
 
 
+## 2 - Protocols & Account Setup
 
+### Supported Protocols
+- **IMAP** (with IDLE for push notifications)
+- **SMTP** (with STARTTLS / SMTPS)
+- **OAuth 2.0** for Google, Microsoft (Exchange/Outlook), Yahoo
 
-2 — Protocols & Account Setup
+### Automatic Account Setup
+- Detect provider from email address and prefill IMAP/SMTP settings
+- Presets for Gmail, Outlook/Office365, Yahoo, Zoho, ProtonMail Bridge, Fastmail
+- Manual advanced setup UI for custom domains
 
-Supported protocols
-
-IMAP (with IDLE for push)
-
-SMTP (with STARTTLS / SMTPS)
-
-POP3 (optional)
-
-OAuth 2.0 for Google, Microsoft (Exchange/Outlook), Yahoo
-
-Optional Exchange Web Services (EWS) / Microsoft Graph for advanced Exchange integration
-
-
-Automatic account setup
-
-Detect provider from email address and prefill IMAP/SMTP settings if known.
-
-Presets for Gmail, Outlook/Office365, Yahoo, Zoho, ProtonMail Bridge, Fastmail, Yandex.
-
-Manual advanced setup UI for custom domains and port/security options.
-
-
-Multiple accounts & identity management
-
-Add unlimited accounts.
-
-Unified Inbox view (combined) and account-specific inboxes.
-
-Per-account identity (From: address, signature, reply-to).
-
-Per-account sync preferences (frequency, offline cache size).
+### Multiple Accounts & Identity Management
+- Add unlimited accounts
+- Unified Inbox view (combined) and account-specific inboxes
+- Per-account identity (From address, signature, reply-to)
+- Per-account sync preferences (frequency, offline cache size)
 
 
 
 
 ---
 
-3 — User Interface & Experience
+## 3 - User Interface & Experience
 
-Core layout options
+### Core Layout Options
+- **Default 3-pane**: Sidebar (folders/labels) | Message List | Message Content
+- **Split view** (two columns), **Single-column** (mobile-like), **Compact list** (dense)
+- Floating compose window / full-screen compose
+- Resizable panes with persistent layout per device
 
-Default 3-pane: Sidebar (folders/labels) | List | Pane (email content).
+### Sidebar & Navigation
+- Favorites, System folders (Inbox, Sent, Drafts, Archive, Trash, Starred)
+- Smart folders (Unread, Has Attachments), Labels/Folders tree
+- Quick Actions: compose, search, calendar, settings
+- Filtered views: by account, label, date range, attachment presence
 
-Split view (two columns), Single-column (mobile-like) and Compact list (dense).
+### Message List
+- Dense / Comfortable list density settings
+- Columns: sender, subject, snippet, labels, timestamp, size, attachment icon
+- Multi-select actions (archive, delete, mark read/unread, apply label, move)
+- Inline bulk actions toolbar on selection
+- Sort by date, sender, subject, size, or custom
+- Virtualized rendering for performance (react-window)
 
-Floating compose window / full-screen compose.
+### Message View
+- HTML rendering with strict sanitization (CSP + safe HTML renderer)
+- Threaded conversation view with expand/collapse
+- Inline attachments preview (images, PDFs) with download
+- Action strip: Reply / Reply All / Forward / Archive / Move / Label / More
+- Visual indicators for priority, encryption (PGP/GPG), signed messages, attachments
 
-Resizable panes with persistent layout on each device.
+### Compose
+- Rich text editor with formatting (bold, italic, lists), inline images, attachments via drag & drop
+- Templates / canned responses users create themselves
+- Multiple signatures per account; switchable during compose
+- Scheduled send (send later, with timezone support)
+- Spellcheck integration (browser native)
+- Send confirmations for large attachments, missing recipients
+- Attachment size warnings and cloud link suggestions
 
+### Themes & Personalization
+- Light/dark/AMOLED presets
+- Custom theme builder: accent color, font family, compactness, background
+- Accessibility theme: high contrast, large text
+- Default colors: #E7F0FA (bg), #7BA4D0 (secondary), #2E5E99 (primary), #0D2440 (dark)
 
-Sidebar & navigation
-
-Favorites, System folders (Inbox, Sent, Drafts), Smart folders (Unread, Starred), Labels/Folders tree.
-
-Quick Actions: compose, search, calendar, tasks, contacts, settings.
-
-Filtered views: by account, label, date range, attachment presence.
-
-
-Message list
-
-Dense / Comfortable list density settings.
-
-Columns: sender, subject, snippet, labels, timestamp, size, attachment icon.
-
-Multi-select actions (archive, delete, mark read/unread, apply label, move).
-
-Inline bulk actions toolbar appears on selection.
-
-Sort by date, sender, subject, size, or custom.
-
-
-Message view
-
-HTML rendering with strict sanitization (CSP + safe HTML renderer).
-
-Threaded conversation view with expand/collapse for messages.
-
-Inline attachments preview (images, PDFs) with download and inline viewer.
-
-Action strip: Reply / Reply all / Forward / Archive / Move / Label / More (print, .eml download).
-
-Visual indicators for priority, encryption (PGP/GPG), signed messages, attachments.
-
-
-Compose
-
-Rich text editor with formatting (bold, italic, lists), inline images, attachments via drag & drop.
-
-Templates / canned responses (non-AI) users create themselves.
-
-Multiple signatures per account; switchable during compose.
-
-Scheduled send (send later, with timezone support).
-
-Spellcheck integration (browser native).
-
-Send confirmations for large attachments, missing recipients, or possible accidental reply-all.
-
-Attachment size warnings and cloud link suggestions.
-
-
-Themes & personalization
-
-Light/dark/AMOLED presets.
-
-Custom CSS-free theme builder: accent color, font family, compactness, background image.
-
-Accessibility theme: high contrast, large text.
-
-
-Keyboard-first UX
-
-Global command palette (Ctrl/Cmd+K) — quick jump to labels, compose, search.
-
-Full set of keyboard shortcuts configurable and exportable.
-
-Modal command mode (optional) for power users.
+### Keyboard-first UX
+- Global command palette (Ctrl/Cmd+K) - quick jump to labels, compose, search
+- Full set of configurable keyboard shortcuts
+- Modal command mode (optional) for power users
 
 
 
 
 ---
 
-4 — Offline & Syncing
+## 4 - Offline & Syncing
 
-Local caching
+### Local Caching
+- Selectable offline mode per account: headers-only, headers+body, full mail + attachments
+- IndexedDB store on client with configurable retention
+- Background sync when online: push using WebSocket or periodic sync
 
-Selectable offline mode per account: headers-only, headers+body, full mail + attachments.
+### Conflict Resolution
+- Last-write-wins by default with conflict UI for edits on both client and server
+- Draft autosave locally and cloud sync
 
-SQLite / IndexedDB store on client with configurable retention.
-
-Background sync when online: push using IMAP IDLE or periodic sync for POP3.
-
-
-Conflict resolution
-
-Last-write-wins by default with an explicit conflict UI for edits on both client and server.
-
-Draft autosave locally and cloud sync.
-
-
-Offline compose & queue
-
-Compose offline, queue sends, and retry automatically when connection resumes.
-
-Clear UI for queued messages and retry/cancel options.
+### Offline Compose & Queue
+- Compose offline, queue sends, retry automatically when connection resumes
+- Clear UI for queued messages with retry/cancel options
 
 
 
 
 ---
 
-5 — Search & Filtering (non-AI)
+## 5 - Search & Filtering
 
-Fast indexed search
+### Fast Indexed Search
+- Local full-text index of headers and bodies (optional)
+- Search syntax: `from:`, `to:`, `subject:`, `label:`, `has:attachment`, `before:`, `after:`, `is:unread`, `size:>10MB`
+- Boolean operations, phrase search with quotes, date ranges
 
-Local full-text index of headers and bodies (optional).
+### Saved Searches & Filters
+- User-defined saved searches (one-click access)
+- Server-side and client-side filters
+- Auto-apply labels on incoming mail (user-created rules)
 
-Search syntax: from:, to:, subject:, label:, has:attachment, before:, after:, is:unread, size:>10MB.
-
-Boolean operations, phrase search with quotes, date ranges.
-
-
-Saved searches & filters
-
-User-defined saved searches (one-click access).
-
-Server-side and client-side filters:
-
-Server-side where possible (when using provider rules).
-
-Client-side local filters that apply after sync (e.g., for providers without server filters).
-
-
-
-Advanced filters
-
-Bulk actions from search results.
-
-Auto-apply labels on incoming mail (user-created rules).
-
-Filter test runner to preview matched messages.
+### Advanced Filters
+- Bulk actions from search results
+- Filter test runner to preview matched messages
 
 
 
 
 ---
 
-6 — Organization & Automation (No AI)
+## 6 - Organization & Automation
 
-Labels & folders
+### Labels & Folders
+- Multi-label support, nested labels/folders
+- Color-coded labels
+- Apply/remove labels via drag & drop or quick actions
 
-Multi-label support, nested labels/folders.
+### Rules & Automations (user-defined)
+- If/Then rule builder: conditions (from, subject contains, has attachment, size, recipient)
+- Actions (label, move, mark read, forward, star, archive, delete)
+- Schedule-based rules (e.g., archive messages older than 6 months)
 
-Color-coded labels.
+### Snooze, Pin, and Follow-up
+- Snooze messages to reappear at chosen time/date
+- Pin important threads to top of inbox
+- Manual follow-up reminders
 
-Apply/remove labels via drag & drop or quick actions.
-
-
-Rules & automations (user-defined)
-
-If/Then rule builder: conditions (from, subject contains, has attachment, size, recipient), actions (label, move, mark read, forward, star, archive, delete).
-
-Schedule-based rules (e.g., archive messages older than 6 months).
-
-Rate-limited bulk actions to avoid server throttling.
-
-
-Snooze, Pin, and Follow-up
-
-Snooze messages to reappear at chosen time/date.
-
-Pin important threads to top of inbox.
-
-Manual follow-up reminders (user sets a date/time to resurface a message).
-
-
-Smart categories (non-AI)
-
-Rule-based grouping for receipts, newsletters, social updates using deterministic patterns (senders, common headers).
-
-User can edit group rules.
+### Smart Categories
+- Rule-based grouping for receipts, newsletters, social updates
+- User can edit group rules
 
 
 
 
 ---
 
-7 — Collaboration & Team Features
+## 7 - Collaboration & Team Features
 
-Shared mailboxes
+### Shared Mailboxes
+- Add team mailbox accounts
+- Assignment mechanics: claim/unclaim messages, add internal notes, change status
 
-Add team mailbox accounts (IMAP-backed or provider shared mailbox).
+### Internal Comments
+- Add internal comments to threads (not sent to external recipients)
+- Mentions: @username to notify other teammates
 
-Assignment mechanics: claim/unclaim messages, add internal notes (visible to team), change status (open, pending, resolved).
+### Shared Labels & Rules
+- Team-shared labels and rules (admin-configurable)
+- Audit log of actions performed on shared mailbox items
 
-
-Internal comments
-
-Add internal comments to threads (not sent to external recipients).
-
-Mentions: @username to notify other teammates (internal notification system, not email).
-
-
-Shared labels & rules
-
-Team-shared labels and rules (admin-configurable).
-
-Audit log of actions performed on shared mailbox items.
-
-
-Delegation
-
-Delegate mailbox access with role-based permissions (read-only, respond-as, admin manage).
+### Delegation
+- Delegate mailbox access with role-based permissions (read-only, respond-as, admin)
 
 
 
 
 ---
 
-8 — Security & Privacy (Detailed)
+## 8 - Security & Privacy
 
-Authentication
+### Authentication
+- OAuth2 for provider accounts
+- JWT-based session management
+- Device/session management with remote logout
+- Two-factor authentication (2FA) support
 
-OAuth2 for provider accounts.
+### Encryption
+- Optional PGP/GPG integration for end-to-end encryption
+- Key management UI (import/export keys, key trust model)
+- Transport security: TLS for all connections
 
-Support for App Passwords for accounts that need them.
+### Phishing & Malware Protections
+- URL hover reveal and domain highlighting
+- Display origin details and visual warnings for suspicious headers (SPF/DKIM/DMARC failures)
+- Block remote image auto-loading by default
 
-Device/session management with remote logout.
+### Privacy & Telemetry
+- Default: telemetry off
+- GDPR/Data subject request support: export user data, delete account
 
-Two-factor authentication (2FA) for app account (if user account exists on service).
-
-
-Encryption
-
-Optional PGP/GPG integration for end-to-end encryption.
-
-Key management UI (import/export keys, key trust model, sign/verify, key discovery for contacts).
-
-
-Transport security: TLS for all connections, strict certificate validation and pinning options (advanced setting).
-
-Encrypted local storage optional with passphrase.
-
-
-Phishing & malware protections
-
-URL hover reveal and domain highlighting.
-
-Display origin details (full email headers view) and visual warnings for suspicious headers (e.g., SPF/DKIM/DMARC failures).
-
-Attachment sandboxing: view attachments in a sandboxed viewer; block certain file types.
-
-Block remote image auto-loading by default; option to allow remote images per sender.
-
-
-Privacy & telemetry
-
-Default: telemetry off. If enabled, show exactly what is collected and allow fine-grained toggles.
-
-No behavioral ads; no data selling.
-
-GDPR/Data subject request support: export user data, delete account.
-
-
-Audit & logging
-
-Local audit trail for sensitive actions (deletes, downloads).
-
-Admin logs for teams (who performed which actions).
+### Audit & Logging
+- Local audit trail for sensitive actions
+- Admin logs for teams
 
 
 
 
 ---
 
-9 — Integrations & Extensions (No AI)
+## 9 - Integrations & Extensions
 
-Calendars & Contacts
+### Calendars & Contacts
+- Calendar integration (Google Calendar, Microsoft Exchange/Outlook, CalDAV)
+- Contacts: CardDAV support and provider sync
+- In-email calendar insertion: create event from email
 
-Calendar integration (Google Calendar, Microsoft Exchange/Outlook, CalDAV).
+### Cloud Storage
+- Attach from cloud (Google Drive, OneDrive, Dropbox)
+- Save attachments to cloud with one click
 
-Contacts: CardDAV support and provider sync.
+### Third-party Connectors
+- Slack, Microsoft Teams integration
+- Zapier / Make integration via webhooks
 
-In-email calendar insertion: create event from email, add suggested attendees (from To/Cc).
+### Plugins & Extensions
+- Secure plugin API with permission manifest
+- Plugins run isolated (sandboxed) in browser environment
 
-
-Cloud storage
-
-Attach from cloud (Google Drive, OneDrive, Dropbox, Box, WebDAV).
-
-Save attachments to cloud with one click.
-
-
-Third-party connectors
-
-Slack, Microsoft Teams: send message or create a task from email link.
-
-Zapier / Make integration via webhooks and app connectors.
-
-
-Browser extensions
-
-Save webpage to email (send-link-to-self), quick compose from anywhere, link to selected text.
-
-
-Plugins & App Store
-
-Secure plugin API with permission manifest.
-
-Plugins run isolated (sandboxed) in the browser environment.
-
-Example plugins: CRM integration, email templates manager, invoice extractor (non-AI), S/MIME support plugin.
-
-
-Developer API & Webhooks
-
-REST API for mail search, send, label manipulation, and webhook subscriptions (new message, label change).
-
-OAuth client credentials for apps; scope-based access controls.
-
-Rate limiting and per-app API keys.
+### Developer API & Webhooks
+- REST API integration with backend
+- WebSocket subscriptions for real-time events
 
 
 
 
 ---
 
-10 — Performance & Scaling
+## 10 - Performance & Scaling
 
-Frontend
+### Frontend Optimization
+- Code-splitting, lazy loading components
+- Minimal initial payload; static assets served via CDN
+- Service Worker for offline assets and caching
+- React Query for efficient data fetching and caching
+- Virtualized lists (react-window) for 60fps scrolling
 
-Code-splitting, lazy loading components.
-
-Minimal initial payload; static assets served via CDN.
-
-Caching strategies with ETags and service-worker for offline assets.
-
-
-Backend (if hosting sync)
-
-Optional sync service for advanced features (search indexing, push notifications, caching).
-
-Horizontal scaling with stateless app servers, Redis for transient state, and a document store for queued items if needed.
-
-Monitoring and autoscaling policies.
-
-
-Benchmarks
-
-Inbox hydrate (first 50 messages) under 1s on 50ms RTT, 20Mbps.
-
-Scroll and list rendering must remain 60fps on modern devices with virtualization for long lists.
+### Benchmarks
+- Inbox hydrate (first 50 messages) under 1s on 50ms RTT, 20Mbps
+- Scroll and list rendering at 60fps with virtualization
 
 
 
 
 ---
 
-11 — Privacy-first Analytics & Instrumentation
+## 11 - Analytics & Instrumentation
 
-Event tracking minimal
+### Privacy-first Analytics
+- Only performance & crash telemetry by default (opt-in for usage analytics)
+- Aggregate and anonymize: no PII in telemetry
+- User UI to view and delete telemetry data
 
-Only performance & crash telemetry by default (opt-in for usage analytics).
-
-Aggregate and anonymize: no PII in telemetry.
-
-Provide users with UI to view and delete telemetry.
-
-
-Error monitoring
-
-Client-side error capture (sourcemap-enabled) with secure storage.
-
-Server alerts for delivery failures, bounce spikes, and provider sync errors.
+### Error Monitoring
+- Client-side error capture with sourcemap-enabled debugging
+- Performance monitoring for Core Web Vitals
 
 
 
 
 ---
 
-12 — Migration Tools
+## 12 - Migration Tools
 
-Import assistants
+### Import Assistants
+- One-click import from Gmail: labels mapping, folder structure
+- Standard IMAP migration wizard for full mailbox copy
+- Export facility: export to MBOX or EMLs per folder
 
-One-click import from Gmail: labels mapping, folder structure, filters (where provider allows).
-
-Standard IMAP migration wizard for full mailbox copy.
-
-Export facility: export to MBOX or EMLs per folder.
-
-
-Provider limit handling
-
-Throttling for large migrations with retry/backoff.
-
-Resumeable migrations with progress UI and logs.
+### Provider Limit Handling
+- Throttling for large migrations with retry/backoff
+- Resumable migrations with progress UI and logs
 
 
 
 
 ---
 
-13 — Settings & Admin Controls
+## 13 - Settings & Admin Controls
 
-User settings
+### User Settings
+- Account-level: sync frequency, storage quotas, signatures, vacation autoresponder
+- Global: theme, keyboard customizations, privacy toggles, notifications
 
-Account-level settings: sync frequency, storage quotas, signatures, vacation autoresponder, forwarding rules (if server supports).
+### Team Admin
+- Domain-level policies (shared labels, retention policies)
+- User provisioning and management
+- Audit logs and export
 
-Global settings: theme, keyboard customizations, privacy toggles, notification preferences.
-
-
-Team admin
-
-Domain-level policies (shared labels, retention policies, delegation settings).
-
-User provisioning via SCIM (for teams).
-
-Audit logs and export.
-
-
-Retention & archival
-
-Per-account retention rules: auto-archive or delete older than X days.
-
-Exportable archived bundles for compliance.
+### Retention & Archival
+- Per-account retention rules
+- Exportable archived bundles for compliance
 
 
 
 
 ---
 
-14 — Compliance & Legal
+## 14 - Accessibility & Internationalization
 
-Data residency
+### Accessibility (WCAG 2.1 AA)
+- Keyboard navigation for all UI flows
+- ARIA attributes on controls; skip links and semantic HTML
+- Screen reader compatibility (VoiceOver/JAWS)
+- High contrast and large text themes
 
-Allow customers to choose hosting region for any hosted backend services.
-
-
-Regulatory
-
-Support for GDPR, CCPA compliance tools (data export, delete).
-
-Optional HIPAA-facing hosting model with BAAs (if offering hosted service).
-
-
-Terms & privacy
-
-Transparent privacy policy; clear service agreements.
+### Internationalization
+- Multi-language UI; right-to-left support
+- Localized date/time handling and timezones
+- Unicode normalization for headers and subjects
 
 
 
 
 ---
 
-15 — Accessibility & Internationalization
+## 15 - Testing Strategy
 
-Accessibility
+### Automated Testing
+- Unit tests for UI components (Vitest + React Testing Library)
+- Integration tests for API operations
+- End-to-end tests with Playwright
+- Accessibility automated checks (axe-core)
 
-WCAG 2.1 AA compliance checklist implemented.
-
-Keyboard navigation for all UI flows.
-
-ARIA attributes on controls; skip links and semantic HTML.
-
-VoiceOver/JAWS compatibility testing.
-
-
-Internationalization
-
-Multi-language UI; right-to-left support.
-
-Localized date/time handling and timezones.
-
-Unicode normalization for headers and subjects.
-
-
+### Manual QA
+- Cross-provider scenarios (Gmail, Exchange, IMAP custom)
+- Offline and conflict resolution edge cases
 
 
 ---
 
-16 — Testing Strategy
+## 16 - Keyboard Shortcuts (Default)
 
-Automated testing
+| Shortcut        | Action           |
+|-----------------|------------------|
+| G then I        | Go to Inbox      |
+| C               | Compose          |
+| R               | Reply            |
+| A               | Reply all        |
+| F               | Forward          |
+| E               | Archive          |
+| #               | Delete           |
+| S               | Star             |
+| Shift+U         | Mark unread      |
+| Cmd/Ctrl+K      | Command palette  |
+| Cmd/Ctrl+Enter  | Send             |
+| Shift+Esc       | Focus search     |
+| ?               | Show shortcuts   |
 
-Unit tests for UI components and sync logic.
-
-Integration tests for IMAP/SMTP operations using test mail servers and mocks.
-
-End-to-end tests across major browsers with Puppeteer or Playwright.
-
-Accessibility automated checks (axe).
-
-
-Manual QA
-
-Cross-provider scenarios (Gmail, Exchange, IMAP custom).
-
-Migration, offline, and conflict resolution edge cases.
-
-Security penetration testing and bug bounty program.
-
-
-
+All shortcuts are configurable in Settings.
 
 ---
 
-17 — Observability & Operations
+## 17 - UI Copy Guidelines
 
-Monitoring
-
-Uptime checks, delivery success metrics, outgoing mail queue metrics.
-
-Alert rules for sync errors, high bounce rates, or service degradation.
-
-
-Support
-
-In-app help center, searchable docs, and email + ticket support.
-
-Admin support portal for enterprise customers with SLA tracking.
-
-
-
+- Be explicit: "Permanently delete?" instead of "Are you sure?"
+- Show contextual help with tooltips
+- Error messaging: avoid raw stack traces; provide actionable steps
 
 ---
 
-18 — Monetization & Pricing Ideas
+## 18 - Component Library
 
-Freemium model
+### Core Components
+- `Sidebar` - Folder/label navigation
+- `MessageList` - Virtualized email list
+- `MessageView` - Email content with thread
+- `ComposeModal` - Rich text email composer
+- `SearchBar` - Advanced search with filters
+- `CommandPalette` - Quick navigation (Cmd+K)
+- `NotificationCenter` - In-app notifications
+- `SettingsPanel` - User preferences
 
-Free tier: core features, limited connected accounts (e.g., 2), limited offline cache.
-
-Premium (monthly/yearly): unlimited accounts, larger offline storage, priority support, custom domain handling, shared mailboxes.
-
-Business / Team plans: shared mailboxes, SCIM provisioning, domain policies, audit logs, SSO, admin controls.
-
-
-Add-ons
-
-Additional storage packs for caches and attachments.
-
-Hosted search indexing (for users who want server-side indexing).
-
-White-label / self-hosted enterprise bundles.
-
-
-Self-hosted / On-prem
-
-Offer dockerized or cloud-deployable packages for companies wanting to host entirely inside their VPC.
-
-
-
+### UI Primitives
+- `Button`, `Input`, `Select`, `Checkbox`, `Toggle`
+- `Modal`, `Dropdown`, `Tooltip`, `Toast`
+- `Avatar`, `Badge`, `Tag`, `Spinner`
+- `Table`, `Tabs`, `Accordion`
 
 ---
 
-19 — Roadmap (Suggested Phases)
+## Assets
 
-Phase 0 — MVP (3–4 months)
-
-IMAP/SMTP connect; Gmail/OAuth quick setup, 3-pane UI, compose, search, offline headers-only caching, basic filters, themes, keyboard shortcuts, basic account management.
-
-
-Phase 1 — Core polish (4–6 months)
-
-Full message caching, attachments, scheduled send, snooze, templates, unified inbox, mobile responsive UI, PGP integration basics, plugin API v1.
-
-
-Phase 2 — Team & scaling (6–9 months)
-
-Shared mailboxes, delegations, team labels, SCIM, admin panel, enterprise features, hosted migration tools.
-
-
-Phase 3 — Enterprise & self-hosting (9–12 months)
-
-On-prem package, advanced security features (HSM for keys), audit exports, SLAs, HIPAA-ready infra.
-
-
+- **Logo**: https://raw.githubusercontent.com/iSundram/share/refs/heads/main/580cde50-45cd-4ce5-bd23-94217f19f504.svg
+- **Icon**: https://raw.githubusercontent.com/iSundram/share/refs/heads/main/1c590f51-d076-4139-8aa4-cb4320567215.svg
 
 ---
 
-20 — Sample User Flows (Detailed)
+## Project Structure
 
-Flow: Add Gmail account
-
-1. User clicks Add Account → enters user@gmail.com.
-
-
-2. App auto-detects Gmail → shows OAuth button.
-
-
-3. User authorizes via Google OAuth popup.
-
-
-4. App confirms permissions and shows sync options (headers-only / full download).
-
-
-5. Inbox populates; unified inbox includes this account.
-
-
-
-Flow: Schedule send
-
-1. Compose modal → user writes message → clicks ► with clock icon → chooses preset (tomorrow 9:00) or custom date/time (with timezone selector).
-
-
-2. Message displays queued status in Outbox with cancel/edit options.
-
-
-
-Flow: Create rule to label receipts automatically
-
-1. Settings → Rules → New rule → Condition: From contains "receipt" OR subject contains "invoice" OR has:attachment AND from contains "store".
-
-
-2. Action: Apply label "Receipts", move to folder Receipts, mark as read.
-
-
-3. Preview runner shows sample messages that match → Save and enable.
-
-
-
-Flow: Offline compose & send
-
-1. User composes while offline → clicks Send → message stored in local queue → UI shows queued badge.
-
-
-2. When online, client retries send using SMTP and shows delivered or failed status.
-
-
-
-
----
-
-21 — Edge Cases & Error Handling
-
-IMAP throttling: exponential backoff and user-visible explanation.
-
-Authentication failures: clear, provider-specific remediation instructions (reconnect OAuth, reset app password).
-
-Attachment upload failures: retry logic and fallbacks (switch to chunked upload where possible).
-
-Large mailbox imports: provide resumable migration, detailed progress, and pause/resume.
-
-Conflicting local edits: show conflict compare UI with options to keep local/server/both.
-
-
+```
+src/
+  components/
+    layout/
+      Sidebar.tsx
+      Header.tsx
+      MainLayout.tsx
+    email/
+      MessageList.tsx
+      MessageItem.tsx
+      MessageView.tsx
+      ThreadView.tsx
+    compose/
+      ComposeModal.tsx
+      Editor.tsx
+      AttachmentPicker.tsx
+    search/
+      SearchBar.tsx
+      SearchFilters.tsx
+      SavedSearches.tsx
+    settings/
+      SettingsPanel.tsx
+      AccountSettings.tsx
+      ThemeSettings.tsx
+    ui/
+      Button.tsx
+      Input.tsx
+      Modal.tsx
+      ...primitives
+  hooks/
+    useMessages.ts
+    useSearch.ts
+    useWebSocket.ts
+    useKeyboardShortcuts.ts
+  services/
+    api.ts
+    auth.ts
+    websocket.ts
+  stores/
+    emailStore.ts
+    uiStore.ts
+  types/
+    email.ts
+    user.ts
+    api.ts
+  utils/
+    formatters.ts
+    validators.ts
+  App.tsx
+  main.tsx
+```
 
 ---
 
-22 — Sample Settings / Keyboard Shortcuts (Suggested Defaults)
-
-G then I — go to Inbox
-
-C — compose
-
-R — reply
-
-A — reply all
-
-F — forward
-
-E — archive
-
-# — delete
-
-S — star
-
-Shift+U — mark unread
-
-Cmd/Ctrl+K — command palette
-
-Cmd/Ctrl+Enter — send
-
-Shift+Esc — focus search
-
-
-(Settings panel: toggles for keyboard scheme, enable vim-like command mode, customize each shortcut, import/export shortcut bindings.)
-
-
----
-
-23 — UI Copy & Microcopy Guidelines
-
-Be explicit: “Permanently delete?” instead of “Are you sure?”
-
-Show contextual help: “This account will sync every X minutes. Increase to keep inbox fresher but may use more battery/data.”
-
-Error messaging: avoid raw stack traces; provide actionable steps.
-
-
-
----
-
-24 — Branding & Name Considerations (quick)
-
-Names that convey speed, privacy, control: Posta, Mailboxr, SwiftMail, AnchorMail, PaneMail. (Optional: use user’s preferred branding later.)
-
-
-
----
-
-25 — Deliverables & Artifacts for Teams
-
-High-fidelity Figma designs for desktop and mobile responsive states.
-
-Component library (React + TypeScript + Tailwind).
-
-Detailed API spec (OpenAPI/Swagger).
-
-Migration scripts and documentation.
-
-Security & compliance playbook.
-
-Onboarding checklist and admin guides.
-
-
-
----
-
-26 — Appendix — Technical Implementation Notes
-
-Frontend stack (recommended): React + TypeScript, Vite, Tailwind CSS, React Query for data sync, Virtualized list (react-window or equivalent), Service Worker for offline assets, IndexedDB for message caching.
-
-Backend (optional sync services): Node.js or Go microservices, Redis for queues, PostgreSQL for metadata, optional Elastic/Meilisearch for server-side search, MinIO for attachments.
-
-Deployment: Docker + Kubernetes, CI/CD pipelines, immutable releases.
-
-Security: CSP, SRI for static assets, strict cookie flags, use WebAuthn for 2FA options.
-
-
-
----
-
-Final Notes — What this Spec Enables
-
-A non-AI, modern alternative to Gmail that focuses on speed, privacy, control, and extensibility.
-
-Suitable for both power users and teams who need shared workflows and on-prem/self-hosted options.
-
-Designed to be modular so features (like PGP, team inboxes, search indexing) can be toggled by user or admin.
-
-.
-
+Built for the WhyMail backend platform - A modern, privacy-focused email experience.
