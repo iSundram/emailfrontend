@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  /* WhyMail Color Theme */
+  --color-whymail-lightest: #E7F0FA;
+  --color-whymail-light: #7BA4D0;
+  --color-whymail-primary: #2E5E99;
+  --color-whymail-dark: #0D2440;
+  
+  /* Extended palette */
+  --color-whymail-50: #f0f6fc;
+  --color-whymail-100: #E7F0FA;
+  --color-whymail-200: #c5d9ef;
+  --color-whymail-300: #a3c2e4;
+  --color-whymail-400: #7BA4D0;
+  --color-whymail-500: #5386bc;
+  --color-whymail-600: #2E5E99;
+  --color-whymail-700: #264d7e;
+  --color-whymail-800: #1e3c63;
+  --color-whymail-900: #0D2440;
+  --color-whymail-950: #091828;
+  
+  /* Semantic colors */
+  --color-background: #E7F0FA;
+  --color-surface: #ffffff;
+  --color-primary: #2E5E99;
+  --color-primary-hover: #264d7e;
+  --color-secondary: #7BA4D0;
+  --color-accent: #0D2440;
+  --color-text: #0D2440;
+  --color-text-muted: #5386bc;
+  --color-border: #c5d9ef;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-background);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-whymail-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-whymail-400);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-whymail-500);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0;
+}
